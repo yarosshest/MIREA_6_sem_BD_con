@@ -1,7 +1,7 @@
 import ast
 
 from prettytable import PrettyTable
-from pymongo import collection
+from pymongo import collection, ASCENDING, DESCENDING
 import abc
 from console.db.db import db
 from schema import Schema, And, Use, Optional, SchemaError
@@ -61,6 +61,29 @@ def match_condition(item, key, op, value):
         raise ValueError(f"Unsupported operator: {op}")
 
 
+def parse_input(input_string: str):
+    if '|' in input_string:
+        filter_string, sort_string = input_string.split('|')
+        filter_string = filter_string.strip()
+        sort_string = sort_string.strip()
+    else:
+        filter_string = input_string.strip()
+        sort_string = ''
+    return filter_string, sort_string
+
+
+def parse_sorting(sort_string: str):
+    parts = sort_string.split(' ')
+    sort_by = None
+    sort_order = 'asc'
+    for part in parts:
+        if 'sort_by=' in part:
+            sort_by = part.split('=')[1]
+        elif 'order=' in part:
+            sort_order = part.split('=')[1]
+    return sort_by, sort_order
+
+
 def filter_data(data, conditions) -> list[dict]:
     filtered_data = []
     for item in data:
@@ -92,8 +115,16 @@ class Collection:
         else:
             self.coll.insert_many(data)
 
-    def show(self):
-        dct = self.coll.find()
+    def show(self, input_string: str):
+        filter_string, sort_string = parse_input(input_string)
+        sort_by, sort_order = parse_sorting(sort_string)
+        order = ASCENDING if sort_order == 'asc' else DESCENDING
+
+        if sort_by:
+            dct = self.coll.find().sort(sort_by, order)
+        else:
+            dct = self.coll.find()
+
         table = PrettyTable()
         try:
             if dct:
@@ -105,10 +136,16 @@ class Collection:
         except IndexError:
             print("Table is empty")
 
-    def showWith(self, filter_string: str):
-        data = self.coll.find()
+    def showWith(self, input_string: str):
+        filter_string, sort_string = parse_input(input_string)
         conditions = parse_conditions(filter_string)
+        data = self.coll.find()
         filtered_data = filter_data(data, conditions)
+
+        sort_by, sort_order = parse_sorting(sort_string)
+        if sort_by:
+            reverse = sort_order == 'desc'
+            filtered_data.sort(key=lambda x: x.get(sort_by), reverse=reverse)
 
         # Create PrettyTable
         table = PrettyTable()

@@ -1,1 +1,4 @@
-pymongo
+pymongo~=4.7.2
+Faker~=25.2.0
+schema~=0.7.7
+prettytable~=3.10.0
