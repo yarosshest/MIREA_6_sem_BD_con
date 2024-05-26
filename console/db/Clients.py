@@ -1,4 +1,5 @@
 from console.db.Collection import Collection
+import ast
 
 
 def new(FIO: str, Tel: str, Email: str) -> dict:
@@ -9,6 +10,18 @@ def new(FIO: str, Tel: str, Email: str) -> dict:
 
 
 class Clients(Collection):
+    name = "Clients"
+
+    def __init__(self):
+        super().__init__(self.name)
+
+    # def insert(self, client: str):
+    #     try:
+    #         dictionary = ast.literal_eval(client)
+    #         print("Преобразованный словарь:", dictionary)
+    #         print("Тип объекта:", type(dictionary))
+    #     except (ValueError, SyntaxError) as e:
+    #         print("Ошибка при преобразовании строки в словарь:", e)
 
     def insertTestData(self):
         self.insert([
@@ -24,5 +37,3 @@ class Clients(Collection):
             new("Носов Мирослав Герасимович", "8 534 390 4965", "valentin1981@gmail.com")
         ])
         print("Clients test data inserted")
-
-
