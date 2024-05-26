@@ -1,6 +1,5 @@
 from console.db.Collection import Collection
-from console.db.Clients import Clients
-from typing import Callable
+from console.db.Collections.Clients import Clients
 
 
 def workWithColl(col: Collection, args: list[str]):
@@ -13,6 +12,8 @@ def workWithColl(col: Collection, args: list[str]):
             col.showWith(' '.join(args[1:]))
         case "del":
             col.dell(' '.join(args[1:]))
+        case "new":
+            col.insertString(' '.join(args[1:]))
         case _:
             print("Command not found")
 

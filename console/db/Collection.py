@@ -1,9 +1,10 @@
-import re
+import ast
 
 from prettytable import PrettyTable
 from pymongo import collection
 import abc
 from console.db.db import db
+from schema import Schema, And, Use, Optional, SchemaError
 
 
 def parse_conditions(filter_string: str):
@@ -73,8 +74,10 @@ def filter_data(data, conditions) -> list[dict]:
 class Collection:
     name: str
     coll: collection
+    schema: Schema
 
-    def __init__(self, nameCollection: str):
+    def __init__(self, nameCollection: str, schema: Schema):
+        self.schema = schema
         collist = db.list_collection_names()
         self.name = nameCollection
         if nameCollection in collist:
@@ -134,3 +137,11 @@ class Collection:
     @abc.abstractmethod
     def insertTestData(self):
         pass
+
+    def insertString(self, client: str):
+        try:
+            dictionary = ast.literal_eval(client)
+            self.schema.validate(dictionary)
+            self.insert(dictionary)
+        except (ValueError, SyntaxError, SchemaError) as e:
+            print("Error converting strings to dictionary:", e)
