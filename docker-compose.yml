@@ -1,33 +1,35 @@
 services:
   mongo1:
     image: mongo:latest
-    hostname: mongo1
     container_name: mongo1
-    restart: always
+    command: [ "--replSet", "my-replica-set", "--bind_ip_all", "--port", "30001" ]
+    volumes:
+      - ./data/mongo-1:/data/db
     ports:
-      - 30001:27017
-    entrypoint: ["mongod", "--bind_ip", "localhost,mongo1"]
-#  mongo2:
-#    image: mongo:latest
-#    hostname: mongo2
-#    container_name: mongo2
-#    ports:
-#      - 27018:27017
-#    entrypoint: ["mongod", "--replSet", "myReplicaSet", "--bind_ip", "localhost,mongo2"]
-#  mongo3:
-#    image: mongo:latest
-#    hostname: mongo3
-#    container_name: mongo3
-#    ports:
-#      - 27019:27017
-#    entrypoint: ["mongod", "--replSet", "myReplicaSet", "--bind_ip", "localhost,mongo3"]
-#  mongosetup:
-#    image: mongo:latest
-#    depends_on:
-#      - mongo1
-#      - mongo2
-#      - mongo3
-#    volumes:
-#      - .:/scripts
-#    restart: "no"
-#    entrypoint: [ "bash", "/scripts/mongo_setup.sh"]
+      - 30001:30001
+    healthcheck:
+      test: test $$(echo "rs.initiate({_id:'my-replica-set',members:[{_id:0,host:\"mongo1:30001\"},{_id:1,host:\"mongo2:30002\"},{_id:2 ,host:\"mongo3:30003\"}]}, {force:true}).ok || rs.status().ok" | mongosh --port 30001 --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+
+  mongo2:
+    image: mongo:latest
+    container_name: mongo2
+    command: [ "--replSet", "my-replica-set", "--bind_ip_all", "--port", "30002" ]
+    volumes:
+      - ./data/mongo-2:/data/db
+    ports:
+      - 30002:30002
+    depends_on:
+      - mongo1
+
+  mongo3:
+    image: mongo:latest
+    container_name: mongo3
+    command: [ "--replSet", "my-replica-set", "--bind_ip_all", "--port", "30003" ]
+    volumes:
+      - ./data/mongo-3:/data/db
+    ports:
+      - 30003:30003
+    depends_on:
+      - mongo1
